@@ -20,7 +20,7 @@ function getDB(): PDO {
             ]);
         } catch (PDOException $e) {
             throw new RuntimeException(
-                'Database connection failed. Check MySQL is running, credentials in database.php, and that database "expense_tracker2" exists.',
+                'Database connection failed. Check MySQL is running, credentials in database.php, and that database "expense_tracker" exists.',
                 0,
                 $e
             );
