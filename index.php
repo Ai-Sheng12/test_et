@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Expense Tracker</title>
+
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <!-- App styles -->
+  <link rel="stylesheet" href="app.css" />
+</head>
+<body>
+
+<!-- Header -->
+<header class="app-header">
+  <div class="container flex items-center justify-between">
+    <div>
+      <h1>💰 Expense Tracker</h1>
+      <p>💸 Smart Budget Manager</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <button id="export-btn" class="btn-secondary text-sm">⬇ Export CSV</button>
+    </div>
+  </div>
+</header>
+
+<!-- Main -->
+<main class="container py-6">
+
+  <!-- Stat Cards -->
+  <section class="stats-grid mb-6">
+    <div class="stat-card">
+      <div class="stat-icon">💸</div>
+      <div class="stat-label">Total Spent (Month)</div>
+      <div class="stat-value" id="total-spent">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">📋</div>
+      <div class="stat-label">Transactions</div>
+      <div class="stat-value" id="expense-count">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🏆</div>
+      <div class="stat-label">Top Category</div>
+      <div class="stat-value text-xl" id="top-category">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">📊</div>
+      <div class="stat-label">Average Expense</div>
+      <div class="stat-value" id="avg-expense">—</div>
+    </div>
+  </section>
+
+  <!-- Nav Tabs -->
+  <div class="nav-tabs mb-5 w-fit">
+    <button class="nav-tab active" data-panel="panel-expenses">Expenses</button>
+    <button class="nav-tab" data-panel="panel-analytics">Analytics</button>
+    <button class="nav-tab" data-panel="panel-budgets">Budgets</button>
+  </div>
+
+  <!-- Panel: Expenses -->
+  <div id="panel-expenses" class="tab-panel grid-2">
+
+    <!-- Add Expense Form -->
+    <div class="card">
+      <p class="card-title">Add Expense</p>
+      <form id="expense-form">
+        <div class="form-group">
+          <label class="form-label" for="expense-amount">Amount ($)</label>
+          <input class="form-control" id="expense-amount" type="number" step="0.01" min="0.01" placeholder="0.00" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="expense-category">Category</label>
+          <select class="form-control" id="expense-category" required>
+            <option value="">Select category</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="expense-date">Date</label>
+          <input class="form-control" id="expense-date" type="date" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="expense-desc">Description</label>
+          <input class="form-control" id="expense-desc" type="text" placeholder="e.g. Weekly groceries" maxlength="255" required />
+        </div>
+        <button class="btn-primary" type="submit">+ Add Expense</button>
+      </form>
+    </div>
+
+    <!-- Expense List -->
+    <div class="card">
+      <div class="flex items-center justify-between mb-3">
+        <p class="card-title mb-0">Transactions</p>
+      </div>
+
+      <!-- Filters -->
+      <div class="filters-bar mb-4">
+        <input class="form-control" id="filter-search" type="text" placeholder="Search..." />
+        <select class="form-control" id="filter-category"></select>
+        <input class="form-control" id="filter-month" type="month" />
+      </div>
+
+      <div id="expense-list"></div>
+      <div id="empty-state" class="empty-state" hidden>
+        <div style="font-size:2rem">📭</div>
+        <p>No expenses found. Add one to get started!</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel: Analytics -->
+  <div id="panel-analytics" class="tab-panel" hidden>
+    <div class="card">
+      <div class="chart-tabs">
+        <button class="chart-tab active" data-chart="category">By Category</button>
+        <button class="chart-tab" data-chart="trend">Monthly Trend</button>
+      </div>
+      <div style="height: 300px; position: relative;">
+        <canvas id="main-chart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel: Budgets -->
+  <div id="panel-budgets" class="tab-panel grid-2" hidden>
+
+    <!-- Set Budget Form -->
+    <div class="card">
+      <p class="card-title">Set Monthly Budget</p>
+      <form id="budget-form">
+        <div class="form-group">
+          <label class="form-label" for="budget-category">Category</label>
+          <select class="form-control" id="budget-category" required>
+            <option value="">Select category</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="budget-limit">Monthly Limit ($)</label>
+          <input class="form-control" id="budget-limit" type="number" step="0.01" min="1" placeholder="0.00" required />
+        </div>
+        <button class="btn-primary" type="submit">Save Budget</button>
+      </form>
+    </div>
+
+    <!-- Budget Progress -->
+    <div class="card">
+      <p class="card-title">Budget Status — <span id="budget-month-label"></span></p>
+      <div id="budget-list"></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- Edit Modal -->
+<div id="edit-modal" class="modal-overlay">
+  <div class="modal-box">
+    <p class="modal-title">Edit Expense</p>
+    <button class="modal-close" id="modal-close" type="button">✕</button>
+    <form id="modal-form">
+      <div class="form-group">
+        <label class="form-label">Amount ($)</label>
+        <input class="form-control" id="modal-amount" type="number" step="0.01" min="0.01" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select class="form-control" id="modal-category" required>
+          <option value="">Select category</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input class="form-control" id="modal-date" type="date" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <input class="form-control" id="modal-desc" type="text" maxlength="255" required />
+      </div>
+      <button class="btn-primary" type="submit">Update Expense</button>
+    </form>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<!-- App JS -->
+<script src="app.js"></script>
+
+<script>
+  // Set budget month label
+  document.getElementById('budget-month-label').textContent =
+    new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
+</script>
+</body>
+</html>
